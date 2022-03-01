@@ -33,6 +33,8 @@ contract ERC20 is IERC20 {
     constructor(string memory _name, string memory _symbol) {
         name = _name;
         symbol = _symbol;
+        balances[msg.sender] = 100*10**18;
+        totalSupply += 100*10**18;
     }
 
     /**
@@ -114,6 +116,17 @@ contract ERC20 is IERC20 {
         return allowed[_owner][_spender];
     }
 
+
+    /**
+   * @dev External function that mints an amount of the token and assigns it to
+   * an account. This encapsulates the modification of balances such that the
+   * proper events are emitted.
+   * @param _amount The amount that will be created.
+   */
+    function mint(uint256 _amount) external {
+        _mint(msg.sender, _amount);
+    }
+
     /**
    * @dev Internal function that mints an amount of the token and assigns it to
    * an account. This encapsulates the modification of balances such that the
@@ -129,6 +142,14 @@ contract ERC20 is IERC20 {
     }
 
     /**
+   * @dev External function that burns an amount of the token
+   * @param _amount The amount that will be burnt.
+   */
+    function burn(uint256 _amount) external {
+        _burn(msg.sender, _amount);
+    }
+
+    /**
    * @dev Internal function that burns an amount of the token of a given
    * account.
    * @param _account The account whose tokens will be burnt.
@@ -141,6 +162,17 @@ contract ERC20 is IERC20 {
         totalSupply -= _amount;
         emit Transfer(_account, address(0), _amount); 
         
+    }
+
+    /**
+   * @dev External function that burns an amount of the token of a given
+   * account, deducting from the sender's allowance for said account. Uses the
+   * internal burn function.
+   * @param _account The account whose tokens will be burnt.
+   * @param _amount The amount that will be burnt.
+   */
+    function burnFrom(address _account, uint256 _amount) external {
+        _burnFrom(_account, _amount);
     }
 
     /**
