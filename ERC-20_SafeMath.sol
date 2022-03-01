@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
-// This Solidity version has built-in overflow/underflow check
+pragma solidity 0.8.11;
 
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 // Contract for EIP20 standard interface
 // Reference: https://eips.ethereum.org/EIPS/eip-20
@@ -19,13 +19,15 @@ abstract contract IERC20 {
 
 // Implemetation of ERC20 token
 contract ERC20 is IERC20 {
+    using SafeMath for uint256;
+
     string public name = "";
     string public symbol = "";
-    uint8 public constant decimals = 18;
     uint256 public totalSupply;
 
     mapping (address => uint256) private balances;
     mapping (address => mapping( address => uint256)) private allowed;
+    uint8 public constant decimals = 18;
 
     /**
     * @dev Constructor, can only set once so set carefully
@@ -34,7 +36,7 @@ contract ERC20 is IERC20 {
         name = _name;
         symbol = _symbol;
         balances[msg.sender] = 100*10**18;
-        totalSupply += 100*10**18;
+        totalSupply = totalSupply.add(100*10**18);
     }
 
     /**
@@ -55,8 +57,8 @@ contract ERC20 is IERC20 {
         require(balances[msg.sender] >= _value, "Sender not have enough token to transfer");
         require(_to != address(0), "The addresss to transfer to must not be address zero");
 
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
 
         emit Transfer(msg.sender, _to, _value);
 
@@ -74,9 +76,9 @@ contract ERC20 is IERC20 {
         require(approvedAmount >= _value, "Sender not have enough approved amount of token to transfer");
         require(balances[_from] >= _value);
 
-        balances[_from] -= _value;
-        balances[_to] += _value;
-        allowed[_from][msg.sender] -= _value;
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
 
         emit Transfer(_from, _to, _value);
 
@@ -136,8 +138,8 @@ contract ERC20 is IERC20 {
    */
     function _mint(address _account, uint256 _amount) internal {
         require(_account != address(0));
-        balances[_account] += _amount;
-        totalSupply += _amount; 
+        balances[_account] = balances[_account].add(_amount);
+        totalSupply = totalSupply.add(_amount); 
         emit Transfer(address(0), _account, _amount);
     }
 
@@ -158,8 +160,8 @@ contract ERC20 is IERC20 {
     function _burn(address _account, uint256 _amount) internal {
         require(_account != address(0));
         require(balances[_account] >= _amount);        
-        balances[_account] -= _amount;
-        totalSupply -= _amount;
+        balances[_account] = balances[_account].sub(_amount);
+        totalSupply = totalSupply.sub(_amount);
         emit Transfer(_account, address(0), _amount); 
         
     }
@@ -194,7 +196,7 @@ contract ERC20 is IERC20 {
 
         // Learn from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/9b3710465583284b8c4c5d2245749246bb2e0094/contracts/token/ERC20/ERC20.sol
         require(allowed[_account][msg.sender] >= _amount);
-        allowed[_account][msg.sender] -= _amount;
+        allowed[_account][msg.sender] = allowed[_account][msg.sender].sub(_amount);
         _burn(_account, _amount);
     }
 }
